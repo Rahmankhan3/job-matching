@@ -34,7 +34,7 @@ class User(UserBase):
 class UserInDB(BaseModel):
     id: str
     email: EmailStr
-    password_hash: str     # only used internally for password verification
+    password_hash: str  
     role: UserRole
     created_at: datetime
 

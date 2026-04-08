@@ -1,0 +1,14 @@
+# Backend-specific ignores
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+
+# Database
+*.sqlite3
+
+# IDE directories
+.vscode/
+.idea/

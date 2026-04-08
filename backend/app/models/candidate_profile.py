@@ -51,8 +51,8 @@ class CandidateProfile(BaseModel):
     resume_url: Optional[str] = None
     linkedin_url: Optional[str] = None
     github_url: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
