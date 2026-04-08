@@ -8,7 +8,7 @@ This is the backend repository for the Job Tracking & Matching system. It provid
 - **Language:** Python 3.9+
 - **Database:** MongoDB (via [PyMongo](https://pymongo.readthedocs.io/))
 - **Data Validation:** Pydantic
-- **Authentication:** JWT (JSON Web Tokens), bcrypt for password hashing
+- **Authentication:** JWT (JSON Web Tokens), Argon2 for password hashing
 - **Server:** Uvicorn
 
 ## 🛠️ Key Features
