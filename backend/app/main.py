@@ -1,4 +1,6 @@
 import os
+import sys
+import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -10,23 +12,35 @@ from app.routes.recruiter import router as recruiter_router
 from app.routes.jobs import router as jobs_router
 from app.routes.applications import router as applications_router
 from app.routes.upload import router as upload_router
+from app.routes.ranking import router as ranking_router
 from fastapi.middleware.cors import CORSMiddleware
+
+# Configure structured application logging
+logging.basicConfig(
+    level=logging.INFO if not settings.DEBUG else logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+# Quiet down third-party verbose debug loggers (PyMongo heartbeats, etc.)
+logging.getLogger("pymongo").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logger = logging.getLogger("job_tracker")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         await client.admin.command('ping')
-        print(f"--------Database connected: {settings.DATABASE_NAME}-------------")
+        logger.info(f"Database connected: {settings.DATABASE_NAME}")
         await create_indexes()
-        print("--------Indexes created successfully--------")
+        logger.info("Indexes created successfully")
     except Exception as e:
-        print(f"----------Database connection failed: {e}")
+        logger.error(f"Database connection failed: {e}")
         raise
     
     yield
     
     client.close()
-    print("-------Database connection closed--------")
+    logger.info("Database connection closed")
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -49,6 +63,7 @@ app.include_router(recruiter_router)
 app.include_router(jobs_router)
 app.include_router(applications_router)
 app.include_router(upload_router)
+app.include_router(ranking_router)
 
 # Serve uploaded files as static assets
 _uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")

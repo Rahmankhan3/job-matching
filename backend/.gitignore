@@ -12,3 +12,12 @@ venv/
 # IDE directories
 .vscode/
 .idea/
+
+# AI / NLP Datasets and Cache (Large files)
+dataset/
+data/
+datasets/
+resume_data/
+models/
+.spacy/
+.cache/

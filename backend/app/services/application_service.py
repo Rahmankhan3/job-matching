@@ -1,3 +1,6 @@
+import os
+import logging
+
 from app.database import applications_collection, jobs_collection, users_collection
 from app.models.application import Application, ApplicationStatus
 from app.models.application_view import (
@@ -9,6 +12,11 @@ from app.models.application_view import (
 from typing import List, Optional
 from bson import ObjectId
 from datetime import datetime
+
+from app.services.ranking_service import process_application_ranking
+from app.models.ranking import RankingStatus
+
+logger = logging.getLogger(__name__)
 
 
 async def create_application(
@@ -70,6 +78,7 @@ async def create_application(
         }],
         "applied_date": datetime.utcnow(),
         "notes": None,
+        "ranking_status": RankingStatus.pending.value,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
     }
@@ -77,6 +86,16 @@ async def create_application(
     result = await applications_collection.insert_one(application_doc)
 
     if result.inserted_id:
+        # ── Phase 2: Trigger AI Ranking (Fire and forget style conceptually) ────────────────
+        await process_application_ranking(
+            application_id=str(result.inserted_id),
+            candidate_id=candidate_id,
+            resume_url=resume_url,
+            job_doc=job,
+            form_responses=form_responses,
+            cover_letter=application_data.get("cover_letter")
+        )
+
         created_app = await applications_collection.find_one(
             {"_id": result.inserted_id}
         )
@@ -84,6 +103,9 @@ async def create_application(
         return Application(**created_app)
 
     return None
+
+
+
 
 
 async def get_application_by_id(application_id: str) -> Optional[Application]:
@@ -188,6 +210,40 @@ async def get_applications_by_job( # gives info of all applications along with c
                 )
         except Exception:
          
+            candidate_summary = None
+
+        app_data["candidate"] = candidate_summary
+        app_list.append(ApplicationRecruiterView(**app_data))
+
+    return app_list
+
+
+async def get_ranked_applications_by_job(
+    job_posting_id: str
+) -> List[ApplicationRecruiterView]:
+    """Get applications for a job sorted by final_match_score descending."""
+    cursor = applications_collection.find(
+        {"job_posting_id": job_posting_id}
+    ).sort("final_match_score", -1)  # highest score first
+
+    app_list = []
+    async for app in cursor:
+        app_data = dict(app)
+        app_data["id"] = str(app_data.pop("_id"))
+
+        candidate_summary = None
+        try:
+            candidate = await users_collection.find_one(
+                {"_id": ObjectId(app_data["candidate_id"])},
+                {"email": 1, "role": 1}
+            )
+            if candidate:
+                candidate_summary = CandidateSummary(
+                    id=str(candidate["_id"]),
+                    email=candidate["email"],
+                    role=candidate["role"]
+                )
+        except Exception:
             candidate_summary = None
 
         app_data["candidate"] = candidate_summary

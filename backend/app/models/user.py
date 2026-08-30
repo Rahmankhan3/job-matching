@@ -40,3 +40,4 @@ class UserInDB(BaseModel):
 
     class Config:
         from_attributes = True
+

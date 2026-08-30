@@ -46,5 +46,17 @@ class Application(ApplicationBase):
     created_at: datetime
     updated_at: datetime
 
+    # ── Phase 2: AI Ranking fields ────────────────────────────────────────
+    parsed_resume_data: Optional[dict] = None
+    match_scores: Optional[dict] = None
+    final_match_score: Optional[float] = None
+    matched_skills: Optional[List[str]] = None
+    missing_skills: Optional[List[str]] = None
+    ranking_metadata: Optional[dict] = None
+    ranking_status: Optional[str] = None
+    eligibility_status: Optional[str] = None
+    ranking_model_version: Optional[str] = None
+    ranking_updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
